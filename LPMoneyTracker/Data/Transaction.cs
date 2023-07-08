@@ -12,7 +12,7 @@ namespace LPMoneyTracker.Data
         public string Merchant { get; set; }
         [Required]
         public double Amount { get; set; }
-        public string Category { get; set; }
+        public Category Category { get; set; }
         public string Note { get; set; }
         public string Account { get; set; }
 

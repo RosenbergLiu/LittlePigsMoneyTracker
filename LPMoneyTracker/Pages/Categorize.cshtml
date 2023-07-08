@@ -1,0 +1,72 @@
+﻿@page "/categorize"
+@model LPMoneyTracker.Pages.CategorizeModel
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].TransDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].Merchant)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].Amount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].Category)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].Note)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].Account)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].IsSubscription)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Transaction[0].IsAccident)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Transaction) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.TransDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Merchant)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Amount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Category)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Note)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Account)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsSubscription)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsAccident)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.TransId">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.TransId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.TransId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
