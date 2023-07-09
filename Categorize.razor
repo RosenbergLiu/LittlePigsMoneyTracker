@@ -1,0 +1,53 @@
+﻿@page "/categorize"
+@using Microsoft.EntityFrameworkCore
+@inject NavigationManager Navigation
+@using System.ComponentModel
+@inject IDbContextFactory<LPMoneyTrackerContext> DbFactory
+
+<h3>Categorize</h3>
+
+<Button class="btn btn-primary" @onclick="GetTransactions">Refresh</Button>
+
+@if(TransactionsTable != null)
+{
+}
+
+
+@code {
+    public Transaction[] TransactionsTable = null;
+
+    IEnumerable<Transaction> selectedRows;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    public async Task UploadTestData()
+    {
+        using var context = DbFactory?.CreateDbContext();
+        var transaction = new Transaction
+            {
+                TransId = Guid.NewGuid().ToString(),
+                TransDate = DateTime.Now,
+                Amount = 100.0,
+                Note = "Test Note",
+                CategoryName = "Food",
+                Merchant = "KFC",
+                Account = "CBA",
+                IsSubscription = false,
+                IsAccident = false
+            };
+
+        context.Transactions.Add(transaction);
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task GetTransactions()
+    {
+        using var context = DbFactory?.CreateDbContext();
+        TransactionsTable = await context.Transactions.Where(t => t.CategoryName == null).ToArrayAsync();
+    }
+
+}

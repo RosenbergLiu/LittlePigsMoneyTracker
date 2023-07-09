@@ -1,0 +1,122 @@
+﻿@page "/edit"
+@inject IJSRuntime JSRuntime
+@inject IDbContextFactory<LPBlazorServerContext> DbFactory
+@inject IConfiguration Configuration
+
+<h3>Edit data</h3>
+
+<button class="btn btn-primary" @onclick="LoadData">Refresh</button>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Merchant</th>
+            <th>Amount</th>
+            <th>Category</th>
+            <th>IsTransfer</th>
+            <th>IsSubscription</th>
+            <th>IsAccident</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if(TransactionsData != null)
+        {
+            foreach(var trans in TransactionsData)
+            {
+                <tr style="align-content:center">
+                    <td>@trans.TransDate</td>
+                    <td>@trans.Merchant</td>
+                    <td>@trans.Amount</td>
+                    <td>
+                        @if(CategoriesData != null)
+                        {
+                            <select class="form-select form-select-sm" id="cat-select" @onchange="@(s => UploadData(trans.TransId, s))">
+                                @foreach (var cat in CategoriesData)
+                                {
+                                    if (trans.CategoryName == cat)
+                                    {
+                                        <option value="@cat" selected>@cat</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@cat">@cat</option>
+                                    }
+                                }
+                            </select>
+                        }
+                    </td>
+                    <td>
+                        @if (trans.IsTransfer)
+                        {
+                            <input class="form-check-input" type="checkbox" checked>
+                        }else{
+                            <input class="form-check-input" type="checkbox">
+                        }
+                        
+                    </td>
+                    <td>@trans.IsSubscription</td>
+                    <td>@trans.IsAccident</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<p>@ErrorMessage</p>
+
+@code {
+    public List<Transaction>? TransactionsData = new List<Transaction>();
+    public List<string>? CategoriesData = new List<string>();
+    public string ErrorMessage = string.Empty;
+    public LPBlazorServerContext? _context;
+
+    public async Task LoadData()
+    {
+        if (_context == null)
+        {
+            ErrorMessage = "Failed to load database";
+        }
+        else
+        {
+            if (_context.Transactions == null)
+            {
+                ErrorMessage = "Failed to load Transaction container";
+            }
+            else
+            {
+                CategoriesData = Configuration.GetSection("Categories").Get<List<string>>();
+                TransactionsData = await _context.Transactions.ToListAsync();
+            }
+        }
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _context = await DbFactory.CreateDbContextAsync();
+        await LoadData();
+    }
+
+    public async Task UploadData(string? transactionId, ChangeEventArgs newCategory)
+    {
+        try
+        {
+            var transaction = await _context.Transactions.FindAsync(transactionId);
+
+            if (transaction == null)
+            {
+                ErrorMessage = "Transaction not found";
+                return;
+            }
+
+            transaction.CategoryName = newCategory.Value.ToString();
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Failed to update transaction: " + ex.Message;
+        }
+    }
+}

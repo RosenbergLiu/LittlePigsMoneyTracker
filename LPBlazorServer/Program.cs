@@ -1,19 +1,18 @@
+﻿using LPBlazorServer.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using LPMoneyTracker.Data;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddDbContext<TransactionsContext>(options =>
-    options.UseCosmos(builder.Configuration.GetConnectionString("LPMoneyTrackerContext") ?? throw new InvalidOperationException("Connection string 'LPMoneyTrackerContext' not found."), "Transactions"));
-builder.Services.AddDbContext<CategoriesContext>(options =>
-    options.UseCosmos(builder.Configuration.GetConnectionString("LPMoneyTrackerContext") ?? throw new InvalidOperationException("Connection string 'LPMoneyTrackerContext' not found."), "Categories"));
+builder.Services.AddDbContextFactory<LPBlazorServerContext>(options =>
+    options.UseCosmos(builder.Configuration.GetConnectionString("LPBlazorServerContext") ?? throw new InvalidOperationException("Connection string 'LPBlazorServerContext' not found."), "MoneyTracker"));
 builder.Services.AddServerSideBlazor();
-builder.Services.AddAntDesign();
+//builder.Services.AddSingleton<WeatherForecastService>();
 
 var app = builder.Build();
 

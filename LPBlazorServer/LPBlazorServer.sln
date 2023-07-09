@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LPMoneyTracker", "LPMoneyTracker.csproj", "{4AF33581-BB8C-4E39-A3A5-6E17F31D5F27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LPBlazorServer", "LPBlazorServer.csproj", "{0CB990CF-FCD4-4E37-B50D-70682F5575DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4AF33581-BB8C-4E39-A3A5-6E17F31D5F27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4AF33581-BB8C-4E39-A3A5-6E17F31D5F27}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4AF33581-BB8C-4E39-A3A5-6E17F31D5F27}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4AF33581-BB8C-4E39-A3A5-6E17F31D5F27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CB990CF-FCD4-4E37-B50D-70682F5575DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CB990CF-FCD4-4E37-B50D-70682F5575DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CB990CF-FCD4-4E37-B50D-70682F5575DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CB990CF-FCD4-4E37-B50D-70682F5575DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {012CC67A-0482-4131-A5C4-53D479DDFE6F}
+		SolutionGuid = {956E224E-20E9-4A81-ACC1-2069C54FABBB}
 	EndGlobalSection
 EndGlobal
