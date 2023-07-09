@@ -25,20 +25,20 @@
             foreach(var trans in TransactionsData)
             {
                 <tr style="align-content:center">
-                    <td>@trans.TransDate</td>
+                    <td>@trans.TransDate.ToString("dd/MM/yyyy")</td>
                     <td>@trans.Merchant</td>
                     <td>@trans.Amount</td>
                     <td>
                         @if(CategoriesData != null)
                         {
-                            <select class="form-select form-select-sm" id="cat-select" @onchange="@(s => UploadData(trans.TransId, s))">
+                            <select class="form-select form-select-sm" id="cat-select" @onchange="@(s => UploadCategory(trans.TransId, s))">
                                 @foreach (var cat in CategoriesData)
                                 {
                                     if (trans.CategoryName == cat)
                                     {
                                         <option value="@cat" selected>@cat</option>
                                     }
-                                    else
+                                    else 
                                     {
                                         <option value="@cat">@cat</option>
                                     }
@@ -47,16 +47,20 @@
                         }
                     </td>
                     <td>
-                        @if (trans.IsTransfer)
-                        {
-                            <input class="form-check-input" type="checkbox" checked>
-                        }else{
-                            <input class="form-check-input" type="checkbox">
-                        }
-                        
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" @oninput="@(e => UploadIsTransfer(trans.TransId, e))" checked="@trans.IsTransfer">
+                        </div>
                     </td>
-                    <td>@trans.IsSubscription</td>
-                    <td>@trans.IsAccident</td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" @oninput="@(e => UploadIsSubscription(trans.TransId, e))" checked="@trans.IsSubscription">
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" @oninput="@(e => UploadIsAccident(trans.TransId, e))" checked="@trans.IsAccident">
+                        </div>
+                    </td>
                 </tr>
             }
         }
@@ -98,7 +102,7 @@
         await LoadData();
     }
 
-    public async Task UploadData(string? transactionId, ChangeEventArgs newCategory)
+    public async Task UploadCategory(string? transactionId, ChangeEventArgs newCategory)
     {
         try
         {
@@ -111,6 +115,72 @@
             }
 
             transaction.CategoryName = newCategory.Value.ToString();
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Failed to update transaction: " + ex.Message;
+        }
+    }
+
+    public async Task UploadIsTransfer(string? transactionId, ChangeEventArgs newState)
+    {
+        try
+        {
+            var transaction = await _context.Transactions.FindAsync(transactionId);
+
+            if (transaction == null)
+            {
+                ErrorMessage = "Transaction not found";
+                return;
+            }
+
+            transaction.IsTransfer = Convert.ToBoolean(newState.Value);
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Failed to update transaction: " + ex.Message;
+        }
+    }
+
+    public async Task UploadIsSubscription(string? transactionId, ChangeEventArgs newState)
+    {
+        try
+        {
+            var transaction = await _context.Transactions.FindAsync(transactionId);
+
+            if (transaction == null)
+            {
+                ErrorMessage = "Transaction not found";
+                return;
+            }
+
+            transaction.IsSubscription = Convert.ToBoolean(newState.Value);
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Failed to update transaction: " + ex.Message;
+        }
+    }
+
+    public async Task UploadIsAccident(string? transactionId, ChangeEventArgs newState)
+    {
+        try
+        {
+            var transaction = await _context.Transactions.FindAsync(transactionId);
+
+            if (transaction == null)
+            {
+                ErrorMessage = "Transaction not found";
+                return;
+            }
+
+            transaction.IsAccident = Convert.ToBoolean(newState.Value);
 
             await _context.SaveChangesAsync();
         }

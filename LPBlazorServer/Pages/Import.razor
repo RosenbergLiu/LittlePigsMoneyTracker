@@ -1,12 +1,104 @@
 ﻿@page "/import"
+@inject IJSRuntime JSRuntime
+@inject IDbContextFactory<LPBlazorServerContext> DbFactory
+@inject IConfiguration Configuration
 
 <h3>Import</h3>
 
-<button class="btn btn-primary" id="btn-select-file">
-    <i class="bi bi-filetype-csv"></i>
-    Load data from a csv file
-</button>
+<form @onsubmit="UploadData">
+    <div class="mb-3">
+        <label class="form-label" for="column-style">Select the column style:</label>
+        <select class="form-select" id="colum-style" @bind="ColumnStyle">
+            <option value="DateAmountMerchant">Date,Amount,Merchant</option>
+            <option value="DateMerchantAmount">Date,Merchant,Amount</option>
+            <option value="MerchantDateAmount">Merchant,Date,Amount</option>
+            <option value="MerchantAmountDate">Merchant,Amount,Date</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="paste-csv" class="form-label">Paste csv to here:</label>
+        <textarea class="form-control" style="height:50vh" id="paste-csv" @bind="RawData"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="account-select">Select the account:</label>
+        <select class="form-select" id="account-select" @bind="Account">
+            <option selected>Open this select menu</option>
+            <option value="1">One</option>
+            <option value="2">Two</option>
+            <option value="3">Three</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Upload</button>
+</form>
+
+<p>@ErrorMessage</p>
 
 @code {
+    private string ColumnStyle = "DateAmountMerchant";
+    private string RawData = "";
+    private string Account = "";
+    private string ErrorMessage = "";
+    private bool Running = false;
+    public LPBlazorServerContext? _context;
 
+    private async Task UploadData()
+    {
+        Running = true;
+
+        _context = await DbFactory.CreateDbContextAsync();
+
+        var transactions = new List<Transaction>();
+
+        var rows = RawData.Split("\n");
+
+        foreach (var row in rows)
+        {
+            if (string.IsNullOrWhiteSpace(row)) continue;
+
+            var columns = row.Split(',');
+
+            var transaction = new Transaction();
+            switch (ColumnStyle)
+            {
+                case "DateAmountMerchant":
+                    transaction.TransDate = DateTime.Parse(columns[0].Trim('\"'));
+                    transaction.Amount = double.Parse(columns[1].Trim('\"'));
+                    transaction.Merchant = columns[2].Trim('\"');
+                    break;
+                case "DateMerchantAmount":
+                    transaction.TransDate = DateTime.Parse(columns[0].Trim('\"'));
+                    transaction.Merchant = columns[1].Trim('\"');
+                    transaction.Amount = double.Parse(columns[2].Trim('\"'));
+                    break;
+                case "MerchantDateAmount":
+                    transaction.Merchant = columns[0].Trim('\"');
+                    transaction.TransDate = DateTime.Parse(columns[1].Trim('\"'));
+                    transaction.Amount = double.Parse(columns[2].Trim('\"'));
+                    break;
+                case "MerchantAmountDate":
+                    transaction.Merchant = columns[0].Trim('\"');
+                    transaction.Amount = double.Parse(columns[1].Trim('\"'));
+                    transaction.TransDate = DateTime.Parse(columns[2].Trim('\"'));
+                    break;
+            }
+            transaction.Account = Account;
+            transactions.Add(transaction);
+        }
+        ErrorMessage = transactions.Count.ToString();
+
+        try
+        {
+            _context.Transactions.AddRange(transactions);
+            await _context.SaveChangesAsync();
+            ErrorMessage = $"Uploaded {transactions.Count} transactions successfully.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to upload transactions: {ex.Message}";
+        }
+        finally
+        {
+            Running = false;
+        }
+    }
 }

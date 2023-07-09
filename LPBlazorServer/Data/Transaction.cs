@@ -5,7 +5,7 @@ namespace LPBlazorServer.Data
     public class Transaction
     {
         [Key]
-        public string? TransId { get; set; }
+        public string? TransId { get; set; } = Guid.NewGuid().ToString();
         [Required]
         public DateTime TransDate { get; set; }
         [Required]
