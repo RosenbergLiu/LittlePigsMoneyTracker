@@ -47,9 +47,10 @@
     public LPBlazorServerContext? _context;
     private List<string> accountsData = new List<String>();
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         accountsData = Configuration.GetSection("Accounts").Get<List<string>>();
+        return Task.CompletedTask;
     }
 
     private async Task UploadData()
@@ -99,7 +100,7 @@
 
         try
         {
-            _context.Transactions.AddRange(transactions);
+            _context.Transactions.AddRangeAsync(transactions);
             await _context.SaveChangesAsync();
             ErrorMessage = $"Uploaded {transactions.Count} transactions successfully.";
         }
