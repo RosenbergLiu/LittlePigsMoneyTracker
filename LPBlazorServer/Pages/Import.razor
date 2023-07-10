@@ -1,4 +1,5 @@
 ﻿@page "/import"
+@using Microsoft.Azure.Cosmos
 @inject IJSRuntime JSRuntime
 @inject IDbContextFactory<LPBlazorServerContext> DbFactory
 @inject IConfiguration Configuration
@@ -8,8 +9,8 @@
 <form @onsubmit="UploadData">
     <div class="mb-3">
         <label class="form-label" for="column-style">Select the column style:</label>
-        <select class="form-select" id="colum-style" @bind="ColumnStyle">
-            <option value="DateAmountMerchant">Date,Amount,Merchant</option>
+        <select class="form-select" id="colum-style" @bind="ColumnStyle" required>
+            <option value="DateAmountMerchant" selected>Date,Amount,Merchant</option>
             <option value="DateMerchantAmount">Date,Merchant,Amount</option>
             <option value="MerchantDateAmount">Merchant,Date,Amount</option>
             <option value="MerchantAmountDate">Merchant,Amount,Date</option>
@@ -21,14 +22,18 @@
     </div>
     <div class="mb-3">
         <label class="form-label" for="account-select">Select the account:</label>
-        <select class="form-select" id="account-select" @bind="Account">
-            <option selected>Open this select menu</option>
-            <option value="1">One</option>
-            <option value="2">Two</option>
-            <option value="3">Three</option>
+        <select class="form-select" id="account-select" @bind="Account" required>
+            @foreach (var account in accountsData)
+            {
+                <option value="@account">@account</option>
+            }
         </select>
     </div>
     <button type="submit" class="btn btn-primary">Upload</button>
+    @if (Running)
+    {
+        <p>Running...</p>
+    }
 </form>
 
 <p>@ErrorMessage</p>
@@ -40,6 +45,12 @@
     private string ErrorMessage = "";
     private bool Running = false;
     public LPBlazorServerContext? _context;
+    private List<string> accountsData = new List<String>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        accountsData = Configuration.GetSection("Accounts").Get<List<string>>();
+    }
 
     private async Task UploadData()
     {
