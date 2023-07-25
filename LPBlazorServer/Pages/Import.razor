@@ -1,116 +1,134 @@
-﻿@page "/import"
+@page "/import"
 @using Microsoft.Azure.Cosmos
 @inject IJSRuntime JSRuntime
 @inject IDbContextFactory<LPBlazorServerContext> DbFactory
 @inject IConfiguration Configuration
+@inject NotificationService NotificationService
 
 <h3>Import</h3>
+<RadzenTemplateForm TItem="Model" Data=@model Submit="@UploadData" InvalidSubmit="@OnIvalidSubmit">
+    <div class="row mb-5">
+        <RadzenDropDown @bind-Value=@model.selectedAccount Data=@accounts Name="AccountSelector" Placeholder="Please select a bank account" Style="max-width:50vh;"/>
+        <RadzenRequiredValidator Component="AccountSelector" Text="Account is required" Style="position: absolute" />
+    </div>
+    
+    <div class="row mb-5">
+        <RadzenDropDown @bind-Value=@model.selectedStyle Data=@styles Name="StyleSelector" Placeholder="Please select a csv column style" Style="max-width:50vh;"/>
+        <RadzenRequiredValidator Component="StyleSelector" Text="CSV column style is required" Style="position: absolute" />
+    </div>
+    
+    <div class="row mb-5">
+        <RadzenTextArea Placeholder="Please paste CSV here..." @bind-Value=@model.csvInput Name="CsvInput" class="w-100" Style="min-height:50vh;max-height:70vh;"/>
+        <RadzenRequiredValidator Component="CsvInput" Text="CSV data is required" Style="position: absolute" />
+    </div>
+    
+    <div class="row mb-5">
+        <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Upload" ButtonType="ButtonType.Submit" Style="max-width:50vh;"/>
+    </div>
+</RadzenTemplateForm>
 
-<form @onsubmit="UploadData">
-    <div class="mb-3">
-        <label class="form-label" for="column-style">Select the column style:</label>
-        <select class="form-select" id="colum-style" @bind="ColumnStyle" required>
-            <option value="DateAmountMerchant" selected>Date,Amount,Merchant</option>
-            <option value="DateMerchantAmount">Date,Merchant,Amount</option>
-            <option value="MerchantDateAmount">Merchant,Date,Amount</option>
-            <option value="MerchantAmountDate">Merchant,Amount,Date</option>
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="paste-csv" class="form-label">Paste csv to here:</label>
-        <textarea class="form-control" style="height:50vh" id="paste-csv" @bind="RawData"></textarea>
-    </div>
-    <div class="mb-3">
-        <label class="form-label" for="account-select">Select the account:</label>
-        <select class="form-select" id="account-select" @bind="Account" required>
-            @foreach (var account in accountsData)
-            {
-                <option value="@account">@account</option>
-            }
-        </select>
-    </div>
-    <button type="submit" class="btn btn-primary">Upload</button>
-    @if (Running)
-    {
-        <p>Running...</p>
-    }
-</form>
+
 
 <p>@ErrorMessage</p>
 
 @code {
-    private string ColumnStyle = "DateAmountMerchant";
-    private string RawData = "";
-    private string Account = "";
-    private string ErrorMessage = "";
-    private bool Running = false;
     public LPBlazorServerContext? _context;
-    private List<string> accountsData = new List<String>();
+    bool Running = false;
+    string ErrorMessage = "";
+    IEnumerable<string> accounts;
+    IEnumerable<string> styles;
 
-    protected override Task OnInitializedAsync()
+    class Model
     {
-        accountsData = Configuration.GetSection("Accounts").Get<List<string>>();
-        return Task.CompletedTask;
+        public string selectedAccount { get; set; }
+        public string selectedStyle { get; set; }
+        public string csvInput { get; set; }
+    }
+
+    Model model = new Model();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        accounts = Configuration.GetSection("Accounts").Get<List<string>>();
+        styles = Configuration.GetSection("Styles").Get<List<string>>();
     }
 
     private async Task UploadData()
     {
-        Running = true;
-
-        _context = await DbFactory.CreateDbContextAsync();
-
-        var transactions = new List<Transaction>();
-
-        var rows = RawData.Split("\n");
-
-        foreach (var row in rows)
-        {
-            if (string.IsNullOrWhiteSpace(row)) continue;
-
-            var columns = row.Split(',');
-
-            var transaction = new Transaction();
-            switch (ColumnStyle)
-            {
-                case "DateAmountMerchant":
-                    transaction.TransDate = DateTime.Parse(columns[0].Trim('\"'));
-                    transaction.Amount = double.Parse(columns[1].Trim('\"'));
-                    transaction.Merchant = columns[2].Trim('\"');
-                    break;
-                case "DateMerchantAmount":
-                    transaction.TransDate = DateTime.Parse(columns[0].Trim('\"'));
-                    transaction.Merchant = columns[1].Trim('\"');
-                    transaction.Amount = double.Parse(columns[2].Trim('\"'));
-                    break;
-                case "MerchantDateAmount":
-                    transaction.Merchant = columns[0].Trim('\"');
-                    transaction.TransDate = DateTime.Parse(columns[1].Trim('\"'));
-                    transaction.Amount = double.Parse(columns[2].Trim('\"'));
-                    break;
-                case "MerchantAmountDate":
-                    transaction.Merchant = columns[0].Trim('\"');
-                    transaction.Amount = double.Parse(columns[1].Trim('\"'));
-                    transaction.TransDate = DateTime.Parse(columns[2].Trim('\"'));
-                    break;
-            }
-            transaction.Account = Account;
-            transactions.Add(transaction);
-        }
-        ErrorMessage = transactions.Count.ToString();
-
         try
         {
-            _context.Transactions.AddRangeAsync(transactions);
-            await _context.SaveChangesAsync();
-            ErrorMessage = $"Uploaded {transactions.Count} transactions successfully.";
+            Running = true;
+
+            _context = await DbFactory.CreateDbContextAsync();
+
+            var transactions = new List<Transaction>();
+
+            var rows = model.csvInput.Split("\n");
+
+            foreach (var row in rows)
+            {
+                if (string.IsNullOrWhiteSpace(row)) continue;
+
+                var columns = row.Split(',');
+
+                var transaction = new Transaction();
+                switch (model.selectedStyle)
+                {
+                    case "Date,Amount,Merchant":
+                        transaction.TransDate = DateTime.Parse(columns[0].Trim('\"'));
+                        transaction.Amount = double.Parse(columns[1].Trim('\"'));
+                        transaction.Merchant = columns[2].Trim('\"');
+                        break;
+                    case "Date,Merchant,Amount":
+                        transaction.TransDate = DateTime.Parse(columns[0].Trim('\"'));
+                        transaction.Merchant = columns[1].Trim('\"');
+                        transaction.Amount = double.Parse(columns[2].Trim('\"'));
+                        break;
+                    case "Merchant,Date,Amount":
+                        transaction.Merchant = columns[0].Trim('\"');
+                        transaction.TransDate = DateTime.Parse(columns[1].Trim('\"'));
+                        transaction.Amount = double.Parse(columns[2].Trim('\"'));
+                        break;
+                    case "Merchant,Amount,Date":
+                        transaction.Merchant = columns[0].Trim('\"');
+                        transaction.Amount = double.Parse(columns[1].Trim('\"'));
+                        transaction.TransDate = DateTime.Parse(columns[2].Trim('\"'));
+                        break;
+                }
+                transaction.Account = model.selectedAccount;
+
+                bool exists = _context.Transactions.AsEnumerable().Any(t => t.TransDate == transaction.TransDate
+                                            && t.Merchant == transaction.Merchant
+                                            && t.Amount == transaction.Amount);
+                if(!exists){
+                    transactions.Add(transaction);
+                }
+            }
+
+            try
+            {
+                await _context.Transactions.AddRangeAsync(transactions);
+                await _context.SaveChangesAsync();
+                ErrorMessage = $"Uploaded {transactions.Count} transactions successfully.";
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to upload transactions: {ex.Message}";
+            }
+            finally
+            {
+                Running = false;
+            }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Failed to upload transactions: {ex.Message}";
+            ErrorMessage = ex.Message;
         }
-        finally
-        {
-            Running = false;
-        }
+    }
+
+    void OnIvalidSubmit()
+    {
+        NotificationService.Notify(NotificationSeverity.Error, "Error", "Form has errors!");
     }
 }
