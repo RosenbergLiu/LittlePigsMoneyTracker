@@ -1,9 +1,46 @@
 ﻿@page "/"
+@inject IDbContextFactory<LPBlazorServerContext> DbFactory
+@inject NotificationService NotificationService
 
 <PageTitle>LittlePigs MoneyTracker</PageTitle>
 
 <h1>Report</h1>
 
-Welcome to your new app.
+    <RadzenChart>
+        <RadzenPieSeries Data="@categorySpent" Title="TotalSpent" CategoryProperty="CategoryName" ValueProperty="TotalSpent">
+            <RadzenSeriesDataLabels Visible=true />
+        </RadzenPieSeries>
+    </RadzenChart>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+
+
+@code {
+    bool busy = true;
+    LPBlazorServerContext? _context;
+    DataItem[] categorySpent;
+
+    class DataItem
+    {
+        public string CategoryName { get; set; }
+        public double TotalSpent { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await LoadData();
+    }
+
+    public async Task LoadData()
+    {
+        _context = await DbFactory.CreateDbContextAsync();
+        var transactions = await _context.Transactions.ToListAsync();
+        var category = transactions.GroupBy(t => t.CategoryName);
+        var categorySpent = category.Select(g => new DataItem
+            {
+                CategoryName = g.Key ?? "Uncategorized",
+                TotalSpent = g.Sum(t => t.Amount)
+            }).ToArray();
+        StateHasChanged();
+    }
+}

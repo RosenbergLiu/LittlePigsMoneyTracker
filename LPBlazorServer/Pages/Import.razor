@@ -6,34 +6,44 @@
 @inject NotificationService NotificationService
 
 <h3>Import</h3>
+
 <RadzenTemplateForm TItem="Model" Data=@model Submit="@UploadData" InvalidSubmit="@OnIvalidSubmit">
-    <div class="row mb-5">
-        <RadzenDropDown @bind-Value=@model.selectedAccount Data=@accounts Name="AccountSelector" Placeholder="Please select a bank account" Style="max-width:50vh;"/>
-        <RadzenRequiredValidator Component="AccountSelector" Text="Account is required" Style="position: absolute" />
+    <div class="col-lg-6">
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <RadzenLabel Text="Bank Account:" />
+            </div>
+            <div class="col">
+                <RadzenDropDown @bind-Value=@model.selectedAccount Data=@accounts Name="AccountSelector" Placeholder="Please select a bank account" AllowClear=true Style="display: block" />
+                <RadzenRequiredValidator Component="AccountSelector" Text="Account is required" Popup=true Style="position: absolute" />
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <RadzenLabel Text="CSV column style:" />
+            </div>
+            <div class="col">
+                <RadzenDropDown @bind-Value=@model.selectedStyle Data=@styles Name="StyleSelector" Placeholder="Please select a csv column style" AllowClear=true Style="display: block" />
+                <RadzenRequiredValidator Component="StyleSelector" Text="CSV column style is required" Popup=true Style="position: absolute" />
+            </div>
+        </div>
     </div>
     
-    <div class="row mb-5">
-        <RadzenDropDown @bind-Value=@model.selectedStyle Data=@styles Name="StyleSelector" Placeholder="Please select a csv column style" Style="max-width:50vh;"/>
-        <RadzenRequiredValidator Component="StyleSelector" Text="CSV column style is required" Style="position: absolute" />
+    <div class="row mb-4">
+        <RadzenTextArea Placeholder="Please paste CSV here..." @bind-Value=@model.csvInput Name="CsvInput" AllowClear=true Style="min-height: 60vh; max-height: 65vh;" />
     </div>
     
-    <div class="row mb-5">
-        <RadzenTextArea Placeholder="Please paste CSV here..." @bind-Value=@model.csvInput Name="CsvInput" class="w-100" Style="min-height:50vh;max-height:70vh;"/>
-        <RadzenRequiredValidator Component="CsvInput" Text="CSV data is required" Style="position: absolute" />
-    </div>
-    
-    <div class="row mb-5">
-        <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Upload" ButtonType="ButtonType.Submit" Style="max-width:50vh;"/>
+    <div class="row mb-4">
+        <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Upload" ButtonType="ButtonType.Submit" Icon="save" BusyText="Uploading ..." IsBusy=@busy Style="max-width:50vh;" />
     </div>
 </RadzenTemplateForm>
-
-
 
 <p>@ErrorMessage</p>
 
 @code {
-    public LPBlazorServerContext? _context;
-    bool Running = false;
+    LPBlazorServerContext? _context;
+    bool busy = false;
     string ErrorMessage = "";
     IEnumerable<string> accounts;
     IEnumerable<string> styles;
@@ -42,7 +52,7 @@
     {
         public string selectedAccount { get; set; }
         public string selectedStyle { get; set; }
-        public string csvInput { get; set; }
+        public string csvInput { get; set; } = "";
     }
 
     Model model = new Model();
@@ -58,7 +68,7 @@
     {
         try
         {
-            Running = true;
+            busy = true;
 
             _context = await DbFactory.CreateDbContextAsync();
 
@@ -110,20 +120,31 @@
             {
                 await _context.Transactions.AddRangeAsync(transactions);
                 await _context.SaveChangesAsync();
-                ErrorMessage = $"Uploaded {transactions.Count} transactions successfully.";
+                if (transactions.Count != 0)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Success", $"Uploaded {transactions.Count} transactions successfully.");
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Info, "Notice", "No transaction was updated");
+                }
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Failed to upload transactions: {ex.Message}";
+                NotificationService.Notify(NotificationSeverity.Error, "Failed to upload transactions", ex.Message);
             }
             finally
             {
-                Running = false;
+                busy = false;
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+        finally
+        {
+            busy = false;
         }
     }
 
