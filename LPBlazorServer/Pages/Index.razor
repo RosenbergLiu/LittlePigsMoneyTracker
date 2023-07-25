@@ -8,16 +8,13 @@
 
     <RadzenChart>
         <RadzenPieSeries Data="@categorySpent" Title="TotalSpent" CategoryProperty="CategoryName" ValueProperty="TotalSpent">
-            <RadzenSeriesDataLabels Visible=true />
         </RadzenPieSeries>
     </RadzenChart>
-
-
 
 @code {
     bool busy = true;
     LPBlazorServerContext? _context;
-    DataItem[] categorySpent;
+
 
     class DataItem
     {
@@ -25,22 +22,21 @@
         public double TotalSpent { get; set; }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
+    IList<DataItem> categorySpent = new List<DataItem>();
 
-        await LoadData();
-    }
-
-    public async Task LoadData()
+    protected override void OnInitialized()
     {
-        _context = await DbFactory.CreateDbContextAsync();
-        var transactions = await _context.Transactions.ToListAsync();
-        var category = transactions.GroupBy(t => t.CategoryName);
-        var categorySpent = category.Select(g => new DataItem
-            {
-                CategoryName = g.Key ?? "Uncategorized",
-                TotalSpent = g.Sum(t => t.Amount)
-            }).ToArray();
-        StateHasChanged();
+        base.OnInitialized();
+        _context = DbFactory.CreateDbContext();
+        var transactions = _context.Transactions.Where(t => t.Amount < 0).ToList();
+        var categoryGroup = transactions.Where(t=>t.CategoryName!="Salary").GroupBy(t => t.CategoryName);
+        foreach (var group in categoryGroup)
+        {
+            categorySpent.Add(new DataItem
+                {
+                    CategoryName = group.Key ?? "Uncategorized",
+                    TotalSpent = -1*(group.Sum(g => g.Amount))
+                });
+        }
     }
 }
