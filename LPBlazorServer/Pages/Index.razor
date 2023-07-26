@@ -6,37 +6,77 @@
 
 <h1>Report</h1>
 
+
+<div class="row my-5">
     <RadzenChart>
-        <RadzenPieSeries Data="@categorySpent" Title="TotalSpent" CategoryProperty="CategoryName" ValueProperty="TotalSpent">
+        <RadzenPieSeries Data="@categorySpent" Title="Spent" CategoryProperty="CategoryName" ValueProperty="TotalSpent" Visible=true>
+            <RadzenChartTooltipOptions Visible=true />
+            <RadzenSeriesDataLabels Visible=true />
         </RadzenPieSeries>
     </RadzenChart>
+</div>
+<div class="row mb-5">
+    <RadzenDataFilter @ref="dataFilter" Auto=true Data="@transactions" TItem="Transaction" ViewChanged="LoadData">
+        <Properties>
+            <RadzenDataFilterProperty TItem="Transaction" Property="TransDate" Title="Transaction Date" />
+        </Properties>
+    </RadzenDataFilter>
+</div>
+
 
 @code {
-    bool busy = true;
+    bool isLoading = true;
     LPBlazorServerContext? _context;
 
+    RadzenDataFilter<Transaction>? dataFilter;
 
-    class DataItem
+    IQueryable<Transaction>? transactions;
+
+    IEnumerable<Transaction>? filteredTransactions;
+
+    class CategoryGroup
     {
-        public string CategoryName { get; set; }
+        public string? CategoryName { get; set; }
         public double TotalSpent { get; set; }
     }
 
-    IList<DataItem> categorySpent = new List<DataItem>();
+    IList<CategoryGroup>? categorySpent;
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         _context = DbFactory.CreateDbContext();
-        var transactions = _context.Transactions.Where(t => t.Amount < 0).ToList();
-        var categoryGroup = transactions.Where(t=>t.CategoryName!="Salary").GroupBy(t => t.CategoryName);
+        if (_context.Transactions != null)
+        {
+            transactions = _context.Transactions.Where(t => (t.Amount < 0 && t.IsTransfer != true)).AsQueryable();
+            filteredTransactions = transactions.ToList();
+            UpdateGroup();
+        }
+    }
+
+    public void UpdateGroup()
+    {
+        categorySpent = new List<CategoryGroup>();
+        var categoryGroup = from t in filteredTransactions group t by t.CategoryName;
         foreach (var group in categoryGroup)
         {
-            categorySpent.Add(new DataItem
+            categorySpent.Add(new CategoryGroup
                 {
                     CategoryName = group.Key ?? "Uncategorized",
-                    TotalSpent = -1*(group.Sum(g => g.Amount))
+                    TotalSpent = -1 * Math.Round(group.Sum(g => g.Amount), 2)
+
                 });
         }
+    }
+
+    async Task LoadData()
+    {
+        isLoading = true;
+
+        await Task.Yield();
+
+        filteredTransactions = transactions.Where(dataFilter).ToList();
+        UpdateGroup();
+        isLoading = false;
     }
 }

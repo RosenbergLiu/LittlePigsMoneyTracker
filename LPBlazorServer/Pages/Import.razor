@@ -5,11 +5,11 @@
 @inject IConfiguration Configuration
 @inject NotificationService NotificationService
 
-<h3>Import</h3>
+<h3>Import transactions</h3>
 
 <RadzenTemplateForm TItem="Model" Data=@model Submit="@UploadData" InvalidSubmit="@OnIvalidSubmit">
     <div class="col-lg-6">
-        <div class="row mb-4">
+        <div class="row mb-5">
             <div class="col-md-4">
                 <RadzenLabel Text="Bank Account:" />
             </div>
@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <div class="row mb-4">
+        <div class="row mb-5">
             <div class="col-md-4">
                 <RadzenLabel Text="CSV column style:" />
             </div>
@@ -30,11 +30,11 @@
         </div>
     </div>
     
-    <div class="row mb-4">
-        <RadzenTextArea Placeholder="Please paste CSV here..." @bind-Value=@model.csvInput Name="CsvInput" AllowClear=true Style="min-height: 60vh; max-height: 65vh;" />
+    <div class="row mb-5">
+        <RadzenTextArea Placeholder="Please paste CSV here..." @bind-Value=@model.csvInput Name="CsvInput" AllowClear=true Style="height: 55vh" />
     </div>
     
-    <div class="row mb-4">
+    <div class="row mb-5">
         <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Upload" ButtonType="ButtonType.Submit" Icon="save" BusyText="Uploading ..." IsBusy=@busy Style="max-width:50vh;" />
     </div>
 </RadzenTemplateForm>
@@ -45,13 +45,13 @@
     LPBlazorServerContext? _context;
     bool busy = false;
     string ErrorMessage = "";
-    IEnumerable<string> accounts;
-    IEnumerable<string> styles;
+    IEnumerable<string>? accounts;
+    IEnumerable<string>? styles;
 
     class Model
     {
-        public string selectedAccount { get; set; }
-        public string selectedStyle { get; set; }
+        public string? selectedAccount { get; set; }
+        public string? selectedStyle { get; set; }
         public string csvInput { get; set; } = "";
     }
 
